@@ -110,7 +110,40 @@ struct Email: Identifiable, Equatable, Hashable {
     }
 }
 
-struct Contact: Identifiable, Hashable {
+// MARK: - ComposeMessage (moved here so it's part of the main target sources)
+
+struct ComposeMessage: Codable, Equatable {
+    var from: Contact?
+    var to: [Contact]
+    var cc: [Contact]
+    var bcc: [Contact]
+    var subject: String
+    var body: String
+    var isHTML: Bool
+    var attachments: [Attachment]
+
+    init(
+        from: Contact? = nil,
+        to: [Contact] = [],
+        cc: [Contact] = [],
+        bcc: [Contact] = [],
+        subject: String = "",
+        body: String = "",
+        isHTML: Bool = true,
+        attachments: [Attachment] = []
+    ) {
+        self.from = from
+        self.to = to
+        self.cc = cc
+        self.bcc = bcc
+        self.subject = subject
+        self.body = body
+        self.isHTML = isHTML
+        self.attachments = attachments
+    }
+}
+
+struct Contact: Identifiable, Hashable, Codable, Equatable {
     let id: UUID
     let name: String
     let email: String
@@ -140,7 +173,7 @@ struct Contact: Identifiable, Hashable {
     }
 }
 
-struct Attachment: Identifiable {
+struct Attachment: Identifiable, Codable, Equatable {
     let id: UUID
     let name: String
     let fileType: FileType
@@ -160,7 +193,7 @@ struct Attachment: Identifiable {
         self.mimeType = mimeType
     }
 
-    enum FileType: String, CaseIterable {
+    enum FileType: String, CaseIterable, Codable {
         case document = "doc.fill"
         case pdf = "doc.richtext.fill"
         case image = "photo.fill"

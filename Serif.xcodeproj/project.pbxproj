@@ -85,7 +85,6 @@
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
-				iOS/GoogleCredentialsiOS.swift,
 				iOS/iOSContentView.swift,
 				iOS/SerifApp.swift,
 				iOS/Views/Account/AccountTab.swift,
@@ -111,7 +110,6 @@
 				iOS/Views/Mail/InboxTab.swift,
 				iOS/Views/Mail/SearchTab.swift,
 				iOS/Views/MainTabView.swift,
-				"Resources/iOS/GoogleService-Info.plist",
 			);
 			target = A10005010000000000000001 /* Serif */;
 		};
@@ -128,7 +126,6 @@
 				Common/Services/EmailPrintService.swift,
 				Info.plist,
 				macOS/ContentView.swift,
-				macOS/GoogleCredentials.swift,
 				macOS/SerifApp.swift,
 				macOS/Support/UpdaterViewModel.swift,
 				macOS/Views/Attachments/AttachmentCardView.swift,
@@ -188,7 +185,6 @@
 				macOS/Views/Sidebar/SidebarView.swift,
 				macOS/Views/Templates/TemplateEditorView.swift,
 				macOS/Views/Templates/TemplateListView.swift,
-				"Resources/macOS/GoogleService-Info.plist",
 			);
 			target = D10005010000000000000001 /* Serif iOS */;
 		};
@@ -705,7 +701,7 @@
 				CURRENT_PROJECT_VERSION = 11;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = QC35MT888M;
+				DEVELOPMENT_TEAM = C496LC49DH;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -721,7 +717,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.1.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.genyus.serif.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.genyus.serif.app.n;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -742,7 +738,7 @@
 				CURRENT_PROJECT_VERSION = 11;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "";
-				DEVELOPMENT_TEAM = QC35MT888M;
+				DEVELOPMENT_TEAM = C496LC49DH;
 				ENABLE_APP_SANDBOX = YES;
 				ENABLE_INCOMING_NETWORK_CONNECTIONS = YES;
 				ENABLE_OUTGOING_NETWORK_CONNECTIONS = YES;
@@ -758,7 +754,7 @@
 					"@executable_path/../Frameworks",
 				);
 				MARKETING_VERSION = 1.1.4;
-				PRODUCT_BUNDLE_IDENTIFIER = com.genyus.serif.app;
+				PRODUCT_BUNDLE_IDENTIFIER = com.genyus.serif.app.n;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
 				SWIFT_EMIT_LOC_STRINGS = YES;

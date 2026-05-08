@@ -63,7 +63,7 @@ final class OAuthService: NSObject {
                 self?.currentAuthorizationFlow = nil
 
                 if let error = error {
-                    continuation.resume(throwing: error)
+                    continuation.resume(throwing: self?.mapOAuthError(error) ?? error)
                     return
                 }
 
@@ -231,6 +231,23 @@ final class OAuthService: NSObject {
         let (data, _) = try await URLSession.shared.data(for: request)
         return try JSONDecoder().decode(T.self, from: data)
     }
+
+    private func mapOAuthError(_ error: Error) -> Error {
+        let nsError = error as NSError
+        let description = [nsError.localizedDescription, nsError.userInfo[NSLocalizedDescriptionKey] as? String]
+            .compactMap { $0 }
+            .joined(separator: " ")
+            .lowercased()
+
+        if description.contains("access_denied") ||
+            description.contains("app is in testing") ||
+            description.contains("not completed the google verification process") ||
+            description.contains("403") {
+            return OAuthError.googleVerificationRequired
+        }
+
+        return error
+    }
 }
 
 // MARK: - Token Response (manual refresh only)
@@ -274,6 +291,7 @@ enum OAuthError: Error, LocalizedError {
     case noAuthCode
     case noRefreshToken
     case listenerFailed
+    case googleVerificationRequired
 
     var errorDescription: String? {
         switch self {
@@ -281,6 +299,8 @@ enum OAuthError: Error, LocalizedError {
         case .noAuthCode:      return "No authorization code received"
         case .noRefreshToken:  return "No refresh token received"
         case .listenerFailed:  return "Failed to start local HTTP redirect listener"
+        case .googleVerificationRequired:
+            return "Google blocked this sign-in because the OAuth app is still in testing or unverified. Add your account as a test user or publish/verify the app in Google Cloud Console."
         }
     }
 }
