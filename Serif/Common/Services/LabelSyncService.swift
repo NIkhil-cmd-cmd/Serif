@@ -16,6 +16,10 @@ final class LabelSyncService {
         accountID: String,
         currentLabels: [GmailLabel]
     ) async -> (labels: [GmailLabel], error: String?) {
+        if AccountStore.shared.accounts.first(where: { $0.id == accountID })?.provider == .outlook {
+            let outlook = Self.outlookSyntheticLabels()
+            return (outlook, nil)
+        }
         var labels = currentLabels
         // Load from disk cache first
         let cached = cache.loadLabels(accountID: accountID)
@@ -38,6 +42,9 @@ final class LabelSyncService {
 
     /// Loads the sendAs aliases for the given account.
     func loadSendAs(accountID: String) async -> (aliases: [GmailSendAs], error: String?) {
+        if AccountStore.shared.accounts.first(where: { $0.id == accountID })?.provider == .outlook {
+            return ([], nil)
+        }
         do {
             let aliases = try await GmailProfileService.shared.listSendAs(accountID: accountID)
             return (aliases, nil)
@@ -49,6 +56,9 @@ final class LabelSyncService {
     /// Loads unread counts per inbox category via parallel label fetches.
     func loadCategoryUnreadCounts(accountID: String) async -> [InboxCategory: Int] {
         guard !accountID.isEmpty else { return [:] }
+        if AccountStore.shared.accounts.first(where: { $0.id == accountID })?.provider == .outlook {
+            return [:]
+        }
         let aid = accountID
         var counts: [InboxCategory: Int] = [:]
         await withTaskGroup(of: (InboxCategory, Int)?.self) { group in
@@ -65,5 +75,20 @@ final class LabelSyncService {
             }
         }
         return counts
+    }
+
+    /// Minimal folder list for Microsoft 365 (Graph folders differ from Gmail labels).
+    private static func outlookSyntheticLabels() -> [GmailLabel] {
+        func label(_ id: String, _ name: String) -> GmailLabel {
+            GmailLabel(id: id, name: name, type: "system", messagesTotal: nil, messagesUnread: nil, threadsTotal: nil, threadsUnread: nil, color: nil)
+        }
+        return [
+            label("INBOX", "Inbox"),
+            label("STARRED", "Starred"),
+            label("SENT", "Sent"),
+            label("DRAFT", "Drafts"),
+            label("SPAM", "Spam"),
+            label("TRASH", "Trash")
+        ]
     }
 }

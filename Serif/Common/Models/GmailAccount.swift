@@ -1,6 +1,6 @@
 import Foundation
 
-/// Represents a connected Gmail account.
+/// Represents a connected mail account (Gmail or Microsoft 365 / Outlook.com).
 struct GmailAccount: Identifiable, Codable, Equatable {
     var id: String { email }
     let email:             String
@@ -12,6 +12,51 @@ struct GmailAccount: Identifiable, Codable, Equatable {
     var unreadCount:       Int
     var historyId:         String?
     var accentColor:       String?
+    /// Which provider backs this account (defaults to Gmail for legacy persisted data).
+    var provider: MailProviderType
+
+    enum CodingKeys: String, CodingKey {
+        case email, displayName, profilePictureURL, messagesTotal, threadsTotal
+        case signature, unreadCount, historyId, accentColor, provider
+    }
+
+    init(
+        email: String,
+        displayName: String,
+        profilePictureURL: URL?,
+        messagesTotal: Int,
+        threadsTotal: Int,
+        signature: String?,
+        unreadCount: Int,
+        historyId: String?,
+        accentColor: String? = nil,
+        provider: MailProviderType = .gmail
+    ) {
+        self.email             = email
+        self.displayName       = displayName
+        self.profilePictureURL = profilePictureURL
+        self.messagesTotal     = messagesTotal
+        self.threadsTotal      = threadsTotal
+        self.signature         = signature
+        self.unreadCount       = unreadCount
+        self.historyId         = historyId
+        self.accentColor       = accentColor
+        self.provider          = provider
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        email             = try c.decode(String.self, forKey: .email)
+        displayName       = try c.decode(String.self, forKey: .displayName)
+        profilePictureURL = try c.decodeIfPresent(URL.self, forKey: .profilePictureURL)
+        messagesTotal     = try c.decodeIfPresent(Int.self, forKey: .messagesTotal) ?? 0
+        threadsTotal      = try c.decodeIfPresent(Int.self, forKey: .threadsTotal) ?? 0
+        signature         = try c.decodeIfPresent(String.self, forKey: .signature)
+        unreadCount       = try c.decodeIfPresent(Int.self, forKey: .unreadCount) ?? 0
+        historyId         = try c.decodeIfPresent(String.self, forKey: .historyId)
+        accentColor       = try c.decodeIfPresent(String.self, forKey: .accentColor)
+        provider          = try c.decodeIfPresent(MailProviderType.self, forKey: .provider) ?? .gmail
+    }
 }
 
 /// Persists the list of connected accounts to UserDefaults.

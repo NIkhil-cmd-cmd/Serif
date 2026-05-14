@@ -18,6 +18,14 @@
 				<string>com.genyus.serif.app</string>
 			</array>
 		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>Microsoft OAuth (Azure native redirect)</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>msauth.com.genyus.serif.app.n</string>
+			</array>
+		</dict>
 	</array>
 	<key>SUFeedURL</key>
 	<string>https://marshallino16.github.io/Serif/appcast.xml</string>

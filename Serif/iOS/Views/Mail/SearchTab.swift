@@ -66,10 +66,11 @@ struct SearchTab: View {
         guard !query.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         isSearching = true
         do {
-            let listResponse = try await GmailMessageService.shared.listMessages(
+            let listResponse = try await RoutingMessageService.shared.listMessages(
                 accountID: coordinator.accountID,
                 labelIDs: [],
                 query: query,
+                pageToken: nil,
                 maxResults: 50
             )
             let refs = listResponse.messages ?? []
@@ -79,7 +80,7 @@ struct SearchTab: View {
                 isSearching = false
                 return
             }
-            let fullMessages = try await GmailMessageService.shared.getMessages(
+            let fullMessages = try await RoutingMessageService.shared.getMessages(
                 ids: refs.map(\.id),
                 accountID: coordinator.accountID,
                 format: "metadata"

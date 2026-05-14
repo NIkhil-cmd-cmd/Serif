@@ -4,7 +4,8 @@ struct AccountSwitcherView: View {
     let accounts: [GmailAccount]
     @Binding var selectedAccountID: String?
     let isExpanded: Bool
-    let onSignIn: () async -> Void
+    let onSignInGoogle: () async -> Void
+    let onSignInOutlook: () async -> Void
     let isSigningIn: Bool
     var onExpandSidebar: (() -> Void)?
     @Environment(\.theme) private var theme
@@ -17,7 +18,7 @@ struct AccountSwitcherView: View {
         HStack(spacing: isExpanded ? 6 : 0) {
             ForEach(Array(accounts.enumerated()), id: \.offset) { index, account in
                 let isActive = account.id == selectedAccountID
-                || (selectedAccountID == nil && account.id == accounts.first?.id)
+                    || (selectedAccountID == nil && account.id == accounts.first?.id)
                 let visible = isExpanded || isActive
                 let activeIndex = accounts.firstIndex(where: { $0.id == (selectedAccountID ?? accounts.first?.id) }) ?? 0
                 let distance = abs(index - activeIndex)
@@ -38,7 +39,7 @@ struct AccountSwitcherView: View {
                 .opacity(visible ? 1 : 0)
                 .zIndex(Double(accounts.count - distance))
             }
-            addAccountButton(size: 28)
+            addAccountMenu(size: 28)
                 .frame(width: isExpanded ? 28 : 0)
                 .opacity(isExpanded ? 1 : 0)
 
@@ -49,9 +50,18 @@ struct AccountSwitcherView: View {
         .padding(.horizontal, 16)
     }
 
-    private func addAccountButton(size: CGFloat) -> some View {
-        Button {
-            Task { await onSignIn() }
+    private func addAccountMenu(size: CGFloat) -> some View {
+        Menu {
+            Button {
+                Task { await onSignInGoogle() }
+            } label: {
+                Label("Add Google account", systemImage: "envelope.fill")
+            }
+            Button {
+                Task { await onSignInOutlook() }
+            } label: {
+                Label("Add Microsoft 365 / Outlook", systemImage: "building.2.fill")
+            }
         } label: {
             ZStack {
                 Circle()
@@ -64,6 +74,7 @@ struct AccountSwitcherView: View {
             .frame(width: size, height: size)
             .contentShape(Circle())
         }
+        .menuStyle(.borderlessButton)
         .buttonStyle(.plain)
         .opacity(isSigningIn ? 0.5 : 1)
         .disabled(isSigningIn)

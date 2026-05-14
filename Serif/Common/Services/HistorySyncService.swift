@@ -6,7 +6,7 @@ final class HistorySyncService {
 
     private let api: MessageFetching
 
-    init(api: MessageFetching = GmailMessageService.shared) {
+    init(api: MessageFetching = RoutingMessageService.shared) {
         self.api = api
     }
 
@@ -32,8 +32,13 @@ final class HistorySyncService {
         labelId: String? = nil,
         existingMessageIDs: Set<String>
     ) async -> SyncResult {
-        guard let account = AccountStore.shared.accounts.first(where: { $0.id == accountID }),
-              let startHistoryId = account.historyId else {
+        guard let account = AccountStore.shared.accounts.first(where: { $0.id == accountID }) else {
+            return SyncResult(succeeded: false)
+        }
+        if account.provider == .outlook {
+            return SyncResult(succeeded: false)
+        }
+        guard let startHistoryId = account.historyId else {
             return SyncResult(succeeded: false)
         }
 

@@ -55,6 +55,25 @@ struct AccountTab: View {
 
     // MARK: - Helpers
 
+    /// Runs an add-account flow, then reloads UI and registers Gmail push for new Google accounts only.
+    private func registerAfterAdd(_ add: () async -> Void) async {
+        let accountsBefore = Set(coordinator.authViewModel.accounts.map(\.id))
+        await add()
+        coordinator.authViewModel.reloadAccounts()
+        await loadAccountAvatars()
+        let accountsAfter = coordinator.authViewModel.accounts
+        if let newAccount = accountsAfter.first(where: { !accountsBefore.contains($0.id) }),
+           newAccount.provider == .gmail,
+           let token = try? TokenStore.shared.retrieve(for: newAccount.id),
+           let refreshToken = token.refreshToken {
+            await PushNotificationService.shared.requestPermissionAndRegister(
+                email: newAccount.email,
+                refreshToken: refreshToken,
+                accountID: newAccount.id
+            )
+        }
+    }
+
     private func settingsCard<Content: View>(@ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             content()
@@ -117,9 +136,18 @@ struct AccountTab: View {
                                 .frame(width: 36, height: 36)
 
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(account.displayName)
-                                        .font(.system(size: 15, weight: .medium))
-                                        .foregroundColor(theme.textPrimary)
+                                    HStack(spacing: 6) {
+                                        Text(account.displayName)
+                                            .font(.system(size: 15, weight: .medium))
+                                            .foregroundColor(theme.textPrimary)
+                                        Text(account.provider == .gmail ? "Gmail" : "Outlook")
+                                            .font(.system(size: 10, weight: .semibold))
+                                            .foregroundColor(theme.textTertiary)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(theme.hoverBackground)
+                                            .clipShape(Capsule())
+                                    }
                                     Text(account.email)
                                         .font(.system(size: 13))
                                         .foregroundColor(theme.textSecondary)
@@ -149,30 +177,33 @@ struct AccountTab: View {
                 settingsDivider
 
                 settingsRow {
-                    Button {
-                        Task {
-                            let accountsBefore = Set(coordinator.authViewModel.accounts.map(\.id))
-                            await coordinator.authViewModel.signIn()
-                            coordinator.authViewModel.reloadAccounts()
-                            await loadAccountAvatars()
-
-                            // Register the newly added account for push notifications
-                            let accountsAfter = coordinator.authViewModel.accounts
-                            if let newAccount = accountsAfter.first(where: { !accountsBefore.contains($0.id) }),
-                               let token = try? TokenStore.shared.retrieve(for: newAccount.id),
-                               let refreshToken = token.refreshToken {
-                                await PushNotificationService.shared.requestPermissionAndRegister(
-                                    email: newAccount.email,
-                                    refreshToken: refreshToken,
-                                    accountID: newAccount.id
-                                )
+                    Menu {
+                        Button {
+                            Task {
+                                await registerAfterAdd {
+                                    await coordinator.authViewModel.signIn()
+                                }
                             }
+                        } label: {
+                            Label("Add Google account", systemImage: "envelope.fill")
+                        }
+                        Button {
+                            Task {
+                                await registerAfterAdd {
+                                    await coordinator.authViewModel.signInOutlook()
+                                }
+                            }
+                        } label: {
+                            Label("Add Microsoft 365 / Outlook", systemImage: "building.2.fill")
                         }
                     } label: {
                         HStack {
                             Label("Add Account", systemImage: "plus.circle")
                                 .foregroundColor(theme.accentPrimary)
                             Spacer()
+                            Image(systemName: "chevron.up.chevron.down")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundColor(theme.textTertiary)
                         }
                         .contentShape(Rectangle())
                     }
@@ -344,7 +375,7 @@ struct AccountTab: View {
                         .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(isRefreshingContacts)
+                    .disabled(isRefreshingContacts || coordinator.authViewModel.accounts.first(where: { $0.id == accountID })?.provider == .outlook)
                 }
             }
         }

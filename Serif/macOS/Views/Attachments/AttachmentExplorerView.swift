@@ -162,7 +162,7 @@ struct AttachmentExplorerView: View {
         Task {
             defer { downloadingAttachmentID = nil }
             do {
-                let data = try await GmailMessageService.shared.getAttachment(
+                let data = try await RoutingMessageService.shared.getAttachment(
                     messageID: attachment.messageId,
                     attachmentID: attachment.attachmentId,
                     accountID: accountID

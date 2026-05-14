@@ -52,7 +52,8 @@ struct SidebarView: View {
                 accounts: authViewModel.accounts,
                 selectedAccountID: $selectedAccountID,
                 isExpanded: isExpanded,
-                onSignIn: { await authViewModel.signIn() },
+                onSignInGoogle: { await authViewModel.signIn() },
+                onSignInOutlook: { await authViewModel.signInOutlook() },
                 isSigningIn: authViewModel.isSigningIn
             ) {
                 withAnimation(.easeInOut) {
@@ -62,11 +63,12 @@ struct SidebarView: View {
             .padding(.bottom, isExpanded ? 12 : 8)
 
             if isExpanded, let account = authViewModel.accounts.first(where: { $0.id == selectedAccountID }) {
-                HStack {
+                HStack(spacing: 6) {
                     Text(account.email)
                         .font(.caption)
                         .foregroundStyle(theme.sidebarText)
                         .truncationMode(.tail)
+                    providerTag(for: account.provider)
                     Spacer()
                 }
                 .padding(.horizontal, 8)
@@ -270,5 +272,18 @@ struct SidebarView: View {
             }
         }
         .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private func providerTag(for provider: MailProviderType) -> some View {
+        Text(provider == .gmail ? "Gmail" : "Outlook")
+            .font(.system(size: 9, weight: .semibold))
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .foregroundStyle(theme.sidebarTextMuted)
+            .background(
+                Capsule()
+                    .fill(theme.hoverBackground.opacity(0.9))
+            )
     }
 }

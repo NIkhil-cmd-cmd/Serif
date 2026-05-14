@@ -159,7 +159,7 @@ final class AppCoordinator: ObservableObject {
         }
 
         Task {
-            guard let msg = try? await GmailMessageService.shared.getMessage(
+            guard let msg = try? await RoutingMessageService.shared.getMessage(
                 id: gmailMessageID, accountID: effectiveAccountID, format: "full"
             ) else { return }
             let email = mailboxViewModel.makeEmail(from: msg)
@@ -271,7 +271,7 @@ final class AppCoordinator: ObservableObject {
             loadSignatures(for: account.id)
             let indexer = AttachmentIndexer(
                 database: .shared,
-                messageService: .shared,
+                messageService: RoutingMessageService.shared,
                 accountID: account.id
             )
             attachmentIndexer = indexer
@@ -284,11 +284,13 @@ final class AppCoordinator: ObservableObject {
                 await mailboxViewModel.loadLabels()
                 await mailboxViewModel.loadSendAs()
                 await mailboxViewModel.loadCategoryUnreadCounts()
-                await GmailProfileService.shared.loadContactPhotos(accountID: account.id)
+                if account.provider == .gmail {
+                    await GmailProfileService.shared.loadContactPhotos(accountID: account.id)
+                }
                 lastRefreshedAt = Date()
                 // Push notifications: check state and re-register ALL connected accounts
                 #if os(iOS)
-                for acct in self.authViewModel.accounts {
+                for acct in self.authViewModel.accounts where acct.provider == .gmail {
                     if let token = try? TokenStore.shared.retrieve(for: acct.id),
                        let refreshToken = token.refreshToken {
                         await PushNotificationService.shared.checkAndReregisterIfNeeded(
@@ -328,7 +330,9 @@ final class AppCoordinator: ObservableObject {
                 }
             }
         } else if folder == .drafts {
-            Task { await mailStore.syncGmailDrafts(accountID: accountID) }
+            if authViewModel.accounts.first(where: { $0.id == accountID })?.provider != .outlook {
+                Task { await mailStore.syncGmailDrafts(accountID: accountID) }
+            }
         } else {
             Task { await loadCurrentFolder() }
         }
@@ -370,7 +374,7 @@ final class AppCoordinator: ObservableObject {
         attachmentStore.refresh()
         let indexer = AttachmentIndexer(
             database: .shared,
-            messageService: .shared,
+            messageService: RoutingMessageService.shared,
             accountID: id
         )
         attachmentIndexer = indexer
@@ -386,8 +390,10 @@ final class AppCoordinator: ObservableObject {
             async let labels: Void = mailboxViewModel.loadLabels()
             async let sendAs: Void = mailboxViewModel.loadSendAs()
             async let unread: Void = mailboxViewModel.loadCategoryUnreadCounts()
-            async let photos: Void = GmailProfileService.shared.loadContactPhotos(accountID: id)
-            _ = await (folder, labels, sendAs, unread, photos)
+            _ = await (folder, labels, sendAs, unread)
+            if AccountStore.shared.accounts.first(where: { $0.id == id })?.provider == .gmail {
+                await GmailProfileService.shared.loadContactPhotos(accountID: id)
+            }
             await indexer.resumePending()
             await indexer.scanForAttachments()
         }

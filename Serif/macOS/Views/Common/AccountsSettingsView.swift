@@ -162,6 +162,13 @@ struct AccountsSettingsView: View {
                             .background(theme.accentPrimary.opacity(0.12))
                             .cornerRadius(3)
                     }
+                    Text(account.provider == .gmail ? "Gmail" : "Outlook")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundColor(theme.textTertiary)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 1)
+                        .background(theme.hoverBackground)
+                        .cornerRadius(3)
                 }
                 Text(account.email)
                     .font(.system(size: 11))

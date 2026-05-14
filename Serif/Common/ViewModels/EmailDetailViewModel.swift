@@ -51,7 +51,7 @@ final class EmailDetailViewModel: ObservableObject {
 
         // Refresh from API
         do {
-            let fresh = try await GmailMessageService.shared.getThread(id: id, accountID: accountID)
+            let fresh = try await RoutingMessageService.shared.getThread(id: id, accountID: accountID)
             thread = fresh
             analyzeTrackers()
             detectCalendarInvite()
@@ -72,7 +72,7 @@ final class EmailDetailViewModel: ObservableObject {
             }
             // Mark all unread messages in the thread as read
             for message in fresh.messages ?? [] where message.isUnread {
-                try? await GmailMessageService.shared.markAsRead(id: message.id, accountID: accountID)
+                try? await RoutingMessageService.shared.markAsRead(id: message.id, accountID: accountID)
             }
         } catch {
             // Keep cached thread if API fails (offline mode)
@@ -175,7 +175,7 @@ final class EmailDetailViewModel: ObservableObject {
                       let attachmentID = part.body?.attachmentId,
                       let mime = part.mimeType else { continue }
                 group.addTask { [accountID] in
-                    let data = try? await GmailMessageService.shared.getAttachment(
+                    let data = try? await RoutingMessageService.shared.getAttachment(
                         messageID: message.id,
                         attachmentID: attachmentID,
                         accountID: accountID
@@ -208,7 +208,7 @@ final class EmailDetailViewModel: ObservableObject {
                           let attachmentID = part.body?.attachmentId,
                           let mime = part.mimeType else { continue }
                     group.addTask { [accountID] in
-                        let data = try? await GmailMessageService.shared.getAttachment(
+                        let data = try? await RoutingMessageService.shared.getAttachment(
                             messageID: message.id,
                             attachmentID: attachmentID,
                             accountID: accountID
@@ -232,7 +232,7 @@ final class EmailDetailViewModel: ObservableObject {
         guard let attachmentID = part.body?.attachmentId else {
             throw GmailAPIError.decodingError(URLError(.badServerResponse))
         }
-        return try await GmailMessageService.shared.getAttachment(
+        return try await RoutingMessageService.shared.getAttachment(
             messageID:    messageID,
             attachmentID: attachmentID,
             accountID:    accountID
@@ -269,7 +269,7 @@ final class EmailDetailViewModel: ObservableObject {
         isLoadingRaw = true
         defer { isLoadingRaw = false }
         do {
-            let raw = try await GmailMessageService.shared.getRawMessage(id: msgID, accountID: accountID)
+            let raw = try await RoutingMessageService.shared.getRawMessage(id: msgID, accountID: accountID)
             rawSource = raw.rawSource
         } catch {
             rawSource = nil

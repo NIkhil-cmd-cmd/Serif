@@ -3,7 +3,7 @@ import SwiftUI
 import AppKit
 #endif
 
-/// Manages account sign-in, sign-out, and the list of connected Gmail accounts.
+/// Manages account sign-in, sign-out, and the list of connected mail accounts (Gmail and Outlook).
 @MainActor
 final class AuthViewModel: ObservableObject {
     @Published var accounts: [GmailAccount] = []
@@ -51,7 +51,9 @@ final class AuthViewModel: ObservableObject {
                 threadsTotal:      profile.threadsTotal,
                 signature:         signature,
                 unreadCount:       0,
-                historyId:         profile.historyId
+                historyId:         profile.historyId,
+                accentColor:       nil,
+                provider:          .gmail
             )
             AccountStore.shared.add(account)
             accounts = AccountStore.shared.accounts
@@ -61,7 +63,41 @@ final class AuthViewModel: ObservableObject {
         }
     }
 
-    // MARK: - Sign Out
+    /// Microsoft 365 / Outlook.com via Microsoft Graph.
+    func signInOutlook() async {
+        isSigningIn = true
+        error = nil
+        defer { isSigningIn = false }
+
+        do {
+            #if os(macOS)
+            let window = NSApplication.shared.windows.first
+            let token = try await MicrosoftOAuthService.shared.authorize(presentingWindow: window)
+            #else
+            let token = try await MicrosoftOAuthService.shared.authorize()
+            #endif
+
+            let identity = try await MicrosoftOAuthService.shared.fetchPrimaryEmail(accessToken: token.accessToken)
+            try TokenStore.shared.save(token, for: identity.email)
+
+            let account = GmailAccount(
+                email:             identity.email,
+                displayName:       identity.displayName,
+                profilePictureURL: nil,
+                messagesTotal:     0,
+                threadsTotal:      0,
+                signature:         nil,
+                unreadCount:       0,
+                historyId:         nil,
+                accentColor:       nil,
+                provider:          .outlook
+            )
+            AccountStore.shared.add(account)
+            accounts = AccountStore.shared.accounts
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
 
     func signOut(_ account: GmailAccount) {
         // Unregister from push notifications before removing the account

@@ -88,7 +88,7 @@ final class ThumbnailCache: ObservableObject {
                 dequeueNext()
             }
             do {
-                let data = try await GmailMessageService.shared.getAttachment(
+                let data = try await RoutingMessageService.shared.getAttachment(
                     messageID: msgId,
                     attachmentID: attId,
                     accountID: accountID

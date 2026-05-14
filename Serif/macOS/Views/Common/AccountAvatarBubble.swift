@@ -41,6 +41,22 @@ struct AccountAvatarBubble: View {
                 if isSelected, let hex = account.accentColor {
                     Circle().strokeBorder(Color(hex: hex), lineWidth: 2.5)
                 }
+
+                if account.provider == .outlook {
+                    Image(systemName: "building.2.fill")
+                        .font(.system(size: size * 0.22, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(3)
+                        .background(Circle().fill(Color(red: 0.0, green: 0.47, blue: 0.83)))
+                        .offset(x: size * 0.28, y: size * 0.28)
+                } else if account.provider == .gmail {
+                    Image(systemName: "envelope.fill")
+                        .font(.system(size: size * 0.2, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(3)
+                        .background(Circle().fill(Color(red: 0.86, green: 0.20, blue: 0.18)))
+                        .offset(x: size * 0.28, y: size * 0.28)
+                }
             }
             .frame(width: size, height: size)
             .clipShape(Circle())

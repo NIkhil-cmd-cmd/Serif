@@ -34,7 +34,7 @@ final class MailboxViewModel: ObservableObject {
 
     init(
         accountID: String,
-        api: MessageFetching = GmailMessageService.shared,
+        api: MessageFetching = RoutingMessageService.shared,
         cache: CacheStoring = MailCacheStore.shared
     ) {
         self.accountID = accountID
@@ -236,6 +236,7 @@ final class MailboxViewModel: ObservableObject {
         let allAccountIDs = TokenStore.shared.allAccountIDs()
         var total = 0
         for id in allAccountIDs {
+            guard AccountStore.shared.accounts.first(where: { $0.id == id })?.provider == .gmail else { continue }
             do {
                 let label: GmailLabel = try await GmailAPIClient.shared.request(
                     path: "/users/me/labels/INBOX",

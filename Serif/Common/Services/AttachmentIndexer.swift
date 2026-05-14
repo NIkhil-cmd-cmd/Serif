@@ -2,7 +2,7 @@ import Foundation
 
 actor AttachmentIndexer {
     private let database: AttachmentDatabase
-    private let messageService: GmailMessageService
+    private let messageService: MessageFetching
     private let accountID: String
     private var isProcessing = false
     private let maxConcurrent = 3
@@ -18,7 +18,7 @@ actor AttachmentIndexer {
         onProgressUpdate = handler
     }
 
-    init(database: AttachmentDatabase, messageService: GmailMessageService, accountID: String) {
+    init(database: AttachmentDatabase, messageService: MessageFetching, accountID: String) {
         self.database = database
         self.messageService = messageService
         self.accountID = accountID
@@ -106,7 +106,7 @@ actor AttachmentIndexer {
     private static func indexAttachment(
         _ att: IndexedAttachment,
         database: AttachmentDatabase,
-        messageService: GmailMessageService,
+        messageService: MessageFetching,
         accountID: String
     ) async {
         do {
@@ -159,6 +159,9 @@ actor AttachmentIndexer {
     /// Safe to call multiple times — skips if already scanning.
     func scanForAttachments() async {
         guard !isScanning else { return }
+        if AccountStore.shared.accounts.first(where: { $0.id == accountID })?.provider == .outlook {
+            return
+        }
         isScanning = true
         defer { isScanning = false }
 
@@ -197,7 +200,8 @@ actor AttachmentIndexer {
                     accountID: acctID,
                     labelIDs: [],
                     query: query,
-                    pageToken: pageToken
+                    pageToken: pageToken,
+                    maxResults: 100
                 )
                 let refs = list.messages ?? []
                 pageToken = list.nextPageToken
@@ -217,7 +221,7 @@ actor AttachmentIndexer {
                 }
 
                 // Mark all as seen in-memory + persist to DB
-                let newIDs = refs.map(\.id)
+                let newIDs = refs.map { $0.id }
                 for id in newIDs { processedMessageIDs.insert(id) }
                 db.markMessagesScanned(newIDs, accountID: acctID)
 
@@ -229,14 +233,14 @@ actor AttachmentIndexer {
                         await monitor.throttleIfNeeded()
                         let chunk = Array(toScan[chunkStart..<min(chunkStart + chunkSize, toScan.count)])
                         let messages = try await service.getMessages(
-                            ids: chunk.map(\.id),
+                            ids: chunk.map { $0.id },
                             accountID: acctID,
                             format: "full"
                         )
 
                         // Check if any message is older than the cutoff date
                         if let cutoff = cutoffDate,
-                           let oldest = messages.compactMap(\.date).min(),
+                           let oldest = messages.compactMap({ $0.date }).min(),
                            oldest < cutoff {
                             reachedCutoff = true
                         }

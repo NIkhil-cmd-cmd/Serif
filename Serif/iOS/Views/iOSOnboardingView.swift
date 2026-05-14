@@ -74,37 +74,59 @@ struct iOSOnboardingView: View {
 
                 Spacer().frame(height: 60)
 
-                // Sign-in button
-                Button {
-                    Task { await handleSignIn() }
-                } label: {
-                    HStack(spacing: 12) {
-                        Group {
-                            if isSigningIn {
-                                ProgressView()
-                                    .tint(Color(hex: "#1C1C1E"))
-                            } else {
-                                GoogleLogo()
-                                    .frame(width: 20, height: 20)
+                VStack(spacing: 12) {
+                    Button {
+                        Task { await handleSignIn() }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Group {
+                                if isSigningIn {
+                                    ProgressView()
+                                        .tint(Color(hex: "#1C1C1E"))
+                                } else {
+                                    GoogleLogo()
+                                        .frame(width: 20, height: 20)
+                                }
                             }
+                            .frame(width: 20, height: 20)
+                            Text(isSigningIn ? "Signing in\u{2026}" : "Continue with Google")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(Color(hex: "#1C1C1E"))
                         }
-                        .frame(width: 20, height: 20)
-                        Text(isSigningIn ? "Signing in\u{2026}" : "Continue with Google")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundColor(Color(hex: "#1C1C1E"))
+                        .padding(.horizontal, 28)
+                        .padding(.vertical, 14)
+                        .frame(minWidth: 260)
+                        .background(
+                            Capsule().fill(.white)
+                        )
+                        .overlay(
+                            Capsule().stroke(Color(hex: "#DADCE0"), lineWidth: 1)
+                        )
                     }
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 14)
-                    .frame(minWidth: 260)
-                    .background(
-                        Capsule().fill(.white)
-                    )
-                    .overlay(
-                        Capsule().stroke(Color(hex: "#DADCE0"), lineWidth: 1)
-                    )
+                    .buttonStyle(.plain)
+                    .disabled(isSigningIn)
+
+                    Button {
+                        Task { await handleOutlookSignIn() }
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: "building.2.fill")
+                                .font(.system(size: 18))
+                                .foregroundColor(.white)
+                                .frame(width: 20, height: 20)
+                            Text("Continue with Microsoft 365 / Outlook")
+                                .font(.system(size: 15, weight: .medium))
+                                .foregroundColor(.white)
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 14)
+                        .frame(minWidth: 260)
+                        .background(Capsule().fill(Color(red: 0.0, green: 0.47, blue: 0.83)))
+                        .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isSigningIn)
                 }
-                .buttonStyle(.plain)
-                .disabled(isSigningIn)
                 .opacity(showButton ? 1 : 0)
                 .offset(y: showButton ? 0 : 24)
 
@@ -196,6 +218,18 @@ struct iOSOnboardingView: View {
         isSigningIn = true
         signInError = nil
         await authViewModel.signIn()
+        isSigningIn = false
+        if authViewModel.hasAccounts {
+            withAnimation(.easeInOut(duration: 0.5)) { isSignedIn = true }
+        } else {
+            signInError = authViewModel.error ?? "Sign-in failed. Please try again."
+        }
+    }
+
+    private func handleOutlookSignIn() async {
+        isSigningIn = true
+        signInError = nil
+        await authViewModel.signInOutlook()
         isSigningIn = false
         if authViewModel.hasAccounts {
             withAnimation(.easeInOut(duration: 0.5)) { isSignedIn = true }

@@ -599,7 +599,7 @@ struct iOSAttachmentExplorerView: View {
         previewError = nil
         Task {
             do {
-                let data = try await GmailMessageService.shared.getAttachment(
+                let data = try await RoutingMessageService.shared.getAttachment(
                     messageID: attachment.messageId,
                     attachmentID: attachment.attachmentId,
                     accountID: accountID
@@ -621,7 +621,7 @@ struct iOSAttachmentExplorerView: View {
         previewError = nil
         Task {
             do {
-                let data = try await GmailMessageService.shared.getAttachment(
+                let data = try await RoutingMessageService.shared.getAttachment(
                     messageID: attachment.messageId,
                     attachmentID: attachment.attachmentId,
                     accountID: accountID
@@ -648,7 +648,7 @@ struct iOSAttachmentExplorerView: View {
     private func navigateToEmail(_ messageId: String) {
         Task {
             do {
-                let message = try await GmailMessageService.shared.getMessage(
+                let message = try await RoutingMessageService.shared.getMessage(
                     id: messageId, accountID: accountID, format: "full"
                 )
                 let email = coordinator.mailboxViewModel.makeEmail(from: message)

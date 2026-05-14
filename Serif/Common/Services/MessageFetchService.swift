@@ -30,7 +30,7 @@ final class MessageFetchService {
     var savedPageToken: String?
     let pageSize = 50
 
-    init(api: MessageFetching = GmailMessageService.shared, cache: CacheStoring = MailCacheStore.shared) {
+    init(api: MessageFetching = RoutingMessageService.shared, cache: CacheStoring = MailCacheStore.shared) {
         self.api = api
         self.cache = cache
     }

@@ -91,7 +91,7 @@ final class MailStore: ObservableObject {
                             imageBase64 = b64
                         } else if let attID = part.body?.attachmentId {
                             // Large image — fetch via attachment API
-                            if let data = try? await GmailMessageService.shared.getAttachment(
+                            if let data = try? await RoutingMessageService.shared.getAttachment(
                                 messageID: message.id, attachmentID: attID, accountID: accountID
                             ) {
                                 imageBase64 = data.base64EncodedString()

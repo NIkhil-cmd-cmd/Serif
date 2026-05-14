@@ -102,7 +102,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
             // Trash thread directly from notification
             if let threadId, let emailAddress {
                 Task {
-                    try? await GmailMessageService.shared.trashThread(id: threadId, accountID: emailAddress)
+                    try? await RoutingMessageService.shared.trashThread(id: threadId, accountID: emailAddress)
                     let total = await Self.totalUnreadCount()
                     try? await UNUserNotificationCenter.current().setBadgeCount(total)
                 }
@@ -143,7 +143,7 @@ class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDele
 
     private static func sendQuickReply(text: String, messageId: String, accountID: String) async {
         do {
-            let msg = try await GmailMessageService.shared.getMessage(
+            let msg = try await RoutingMessageService.shared.getMessage(
                 id: messageId, accountID: accountID, format: "metadata"
             )
             let headers = msg.payload?.headers ?? []

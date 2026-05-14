@@ -74,7 +74,7 @@ class PanelCoordinator: ObservableObject {
         }
         Task {
             do {
-                let raw = try await GmailMessageService.shared.getRawMessage(id: msg.id, accountID: vm.accountID)
+                let raw = try await RoutingMessageService.shared.getRawMessage(id: msg.id, accountID: vm.accountID)
                 self.originalRawSource = raw.rawSource
             } catch {
                 self.originalRawSource = nil
@@ -102,7 +102,7 @@ class PanelCoordinator: ObservableObject {
         guard let msg = vm.latestMessage else { return }
         Task {
             do {
-                let raw = try await GmailMessageService.shared.getRawMessage(id: msg.id, accountID: vm.accountID)
+                let raw = try await RoutingMessageService.shared.getRawMessage(id: msg.id, accountID: vm.accountID)
                 if let source = raw.rawSource {
                     #if os(macOS)
                     await MainActor.run {
