@@ -20,7 +20,11 @@ final class GmailProfileService {
         let url = URL(string: "https://www.googleapis.com/oauth2/v2/userinfo")!
         var request = URLRequest(url: url)
         request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw GmailAPIError.invalidURL }
+        guard (200...299).contains(http.statusCode) else {
+            throw GmailAPIError.httpError(http.statusCode, data)
+        }
         return try JSONDecoder().decode(GoogleUserInfo.self, from: data)
     }
 

@@ -188,8 +188,33 @@ enum GmailAPIError: Error, LocalizedError {
         switch self {
         case .invalidURL:           return "Invalid API URL"
         case .unauthorized:         return "Unauthorized — please sign in again"
-        case .httpError(let c, _):  return "HTTP \(c)"
+        case .httpError(let code, let data):
+            if let summary = Self.googleErrorSummary(from: data), !summary.isEmpty {
+                return "HTTP \(code): \(summary)"
+            }
+            return "HTTP \(code)"
         case .decodingError(let e): return "Decode failed: \(e.localizedDescription)"
         }
+    }
+
+    /// Best-effort text from Google / OAuth JSON error bodies (token endpoint, Gmail, People, etc.).
+    static func googleErrorSummary(from data: Data) -> String? {
+        guard !data.isEmpty else { return nil }
+        guard let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            let raw = String(data: data, encoding: .utf8)?
+                .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            guard !raw.isEmpty else { return nil }
+            return raw.count > 280 ? String(raw.prefix(280)) + "…" : raw
+        }
+        // OAuth token errors: { "error": "invalid_grant", "error_description": "..." }
+        if let err = obj["error"] as? String {
+            if let desc = obj["error_description"] as? String { return "\(err): \(desc)" }
+            return err
+        }
+        // Google API JSON: { "error": { "message": "...", "status": "PERMISSION_DENIED" } }
+        if let errObj = obj["error"] as? [String: Any], let msg = errObj["message"] as? String {
+            return msg
+        }
+        return nil
     }
 }

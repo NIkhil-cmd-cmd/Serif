@@ -228,7 +228,13 @@ final class OAuthService: NSObject {
             .map { "\($0.key)=\($0.value.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? $0.value)" }
             .joined(separator: "&")
             .data(using: .utf8)
-        let (data, _) = try await URLSession.shared.data(for: request)
+        let (data, response) = try await URLSession.shared.data(for: request)
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        guard (200...299).contains(status) else {
+            let detail = GmailAPIError.googleErrorSummary(from: data)
+                ?? String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines)
+            throw OAuthError.tokenEndpointHTTP(status: status, detail: detail)
+        }
         return try JSONDecoder().decode(T.self, from: data)
     }
 
@@ -292,6 +298,8 @@ enum OAuthError: Error, LocalizedError {
     case noRefreshToken
     case listenerFailed
     case googleVerificationRequired
+    /// Token URL returned a non-success status (includes body summary when present).
+    case tokenEndpointHTTP(status: Int, detail: String?)
 
     var errorDescription: String? {
         switch self {
@@ -301,6 +309,11 @@ enum OAuthError: Error, LocalizedError {
         case .listenerFailed:  return "Failed to start local HTTP redirect listener"
         case .googleVerificationRequired:
             return "Google blocked this sign-in because the OAuth app is still in testing or unverified. Add your account as a test user or publish/verify the app in Google Cloud Console."
+        case .tokenEndpointHTTP(let status, let detail):
+            if let detail, !detail.isEmpty {
+                return "Google token request failed (HTTP \(status)): \(detail)"
+            }
+            return "Google token request failed (HTTP \(status))"
         }
     }
 }
